@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense Tracker</title>
+    
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <button class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="mobile-title">Smart Expense Tracker</h1>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-wallet"></i>
+                <span>Smart Expense</span>
+            </div>
+            <button class="close-sidebar" id="closeSidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <ul class="nav-links">
+            <li class="nav-item active" data-view="dashboard">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </li>
+            <li class="nav-item" data-view="add-transaction">
+                <i class="fas fa-plus-circle"></i>
+                <span>Add Transaction</span>
+            </li>
+            <li class="nav-item" data-view="history">
+                <i class="fas fa-list"></i>
+                <span>History</span>
+            </li>
+            <li class="nav-item" data-view="budget">
+                <i class="fas fa-piggy-bank"></i>
+                <span>Budget Planner</span>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo">
+                <i class="fas fa-user-circle"></i>
+                <span id="userName">Guest</span>
+            </div>
+            <button class="logout-btn" id="logoutBtn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+            <p>Student Finance Manager</p>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Toast Notification Container -->
+        <div id="toastContainer" class="toast-container"></div>
+
+        <!-- Budget Warning Banner -->
+        <div id="budgetWarning" class="budget-warning hidden">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Warning: You've used over 80% of your monthly budget!</span>
+        </div>
+
+        <!-- Dashboard View -->
+        <section id="dashboard" class="view active">
+            <h2 class="page-title">Dashboard</h2>
+            
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="card summary-card income">
+                    <div class="card-icon">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="card-info">
+                        <p class="card-label">Total Income</p>
+                        <h3 class="card-value" id="totalIncome">$0.00</h3>
+                    </div>
+                </div>
+                
+                <div class="card summary-card expense">
+                    <div class="card-icon">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="card-info">
+                        <p class="card-label">Total Expenses</p>
+                        <h3 class="card-value" id="totalExpenses">$0.00</h3>
+                    </div>
+                </div>
+                
+                <div class="card summary-card balance">
+                    <div class="card-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="card-info">
+                        <p class="card-label">Current Balance</p>
+                        <h3 class="card-value" id="currentBalance">$0.00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content Grid -->
+            <div class="dashboard-grid">
+                <!-- Recent Transactions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Transactions</h3>
+                        <button class="btn-link" onclick="switchView('history')">View All</button>
+                    </div>
+                    <div class="recent-transactions" id="recentTransactions">
+                        <div class="empty-state">
+                            <i class="fas fa-receipt"></i>
+                            <p>No transactions yet. Add your first transaction!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Spending by Category</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                        <div id="chartEmptyState" class="empty-state">
+                            <i class="fas fa-chart-pie"></i>
+                            <p>Add expenses to see category breakdown</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Transaction View -->
+        <section id="add-transaction" class="view">
+            <h2 class="page-title">Add Transaction</h2>
+            
+            <div class="card form-card">
+                <form id="transactionForm">
+                    <!-- Transaction Type -->
+                    <div class="form-group">
+                        <label>Transaction Type</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="type" value="income" required>
+                                <span class="radio-custom income-radio">
+                                    <i class="fas fa-arrow-up"></i>
+                                    Income
+                                </span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="type" value="expense" checked required>
+                                <span class="radio-custom expense-radio">
+                                    <i class="fas fa-arrow-down"></i>
+                                    Expense
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="number" id="amount" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                        <span class="error-message" id="amountError"></span>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-tag"></i>
+                            <select id="category" name="category" required>
+                                <option value="">Select a category</option>
+                                <option value="Food">🍔 Food</option>
+                                <option value="Transport">🚌 Transport</option>
+                                <option value="Education">📚 Education</option>
+                                <option value="Entertainment">🎮 Entertainment</option>
+                                <option value="Housing">🏠 Housing</option>
+                                <option value="Health">💊 Health</option>
+                                <option value="Shopping">🛍️ Shopping</option>
+                                <option value="Other">📦 Other</option>
+                            </select>
+                        </div>
+                        <span class="error-message" id="categoryError"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-pen"></i>
+                            <input type="text" id="description" name="description" placeholder="What was this for?" required>
+                        </div>
+                        <span class="error-message" id="descriptionError"></span>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-calendar"></i>
+                            <input type="date" id="date" name="date" required>
+                        </div>
+                        <span class="error-message" id="dateError"></span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="fas fa-plus"></i>
+                        Add Transaction
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- History View -->
+        <section id="history" class="view">
+            <h2 class="page-title">Transaction History</h2>
+            
+            <!-- Filters -->
+            <div class="card filter-card">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Category</label>
+                        <select id="filterCategory">
+                            <option value="">All Categories</option>
+                            <option value="Food">🍔 Food</option>
+                            <option value="Transport">🚌 Transport</option>
+                            <option value="Education">📚 Education</option>
+                            <option value="Entertainment">🎮 Entertainment</option>
+                            <option value="Housing">🏠 Housing</option>
+                            <option value="Health">💊 Health</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Other">📦 Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Type</label>
+                        <select id="filterType">
+                            <option value="">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>From Date</label>
+                        <input type="date" id="filterDateFrom">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>To Date</label>
+                        <input type="date" id="filterDateTo">
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="clearFilters">
+                        <i class="fas fa-undo"></i>
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transaction List -->
+            <div class="card">
+                <div class="transaction-list" id="transactionList">
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>No transactions found</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Budget View -->
+        <section id="budget" class="view">
+            <h2 class="page-title">Budget Planner</h2>
+            
+            <!-- Set Budget Card -->
+            <div class="card budget-set-card">
+                <h3>Set Monthly Budget</h3>
+                <form id="budgetForm">
+                    <div class="form-group">
+                        <label for="budgetAmount">Monthly Budget Amount</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="number" id="budgetAmount" step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Set Budget
+                    </button>
+                </form>
+            </div>
+
+            <!-- Budget Status Card -->
+            <div class="card budget-status-card">
+                <h3>Budget Status</h3>
+                
+                <div class="budget-info">
+                    <div class="budget-item">
+                        <span class="budget-label">Monthly Budget:</span>
+                        <span class="budget-value" id="budgetTotal">$0.00</span>
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">Total Expenses:</span>
+                        <span class="budget-value expense-text" id="budgetExpenses">$0.00</span>
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">Remaining:</span>
+                        <span class="budget-value" id="budgetRemaining">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span>Budget Used</span>
+                        <span id="budgetPercentage">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="budgetProgressBar">
+                            <div class="progress-fill" id="budgetProgressFill"></div>
+                        </div>
+                    </div>
+                    <p class="progress-message" id="budgetMessage">Set a budget to start tracking</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
